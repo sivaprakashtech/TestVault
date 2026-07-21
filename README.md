@@ -153,7 +153,23 @@ sqlite3 database/qa_test_management.db < database/seed_data.sql
 
 ## Screenshots
 
-*Premium dark theme with glassmorphism cards, Chart.js visualizations, and a Linear-inspired sidebar.*
+### Dashboard
+![Dashboard](docs/screenshots/Dashboard.png)
+
+### Projects
+![Projects](docs/screenshots/Projects.png)
+
+### Test Cases
+![Test Cases](docs/screenshots/Test%20Cases.png)
+
+### Execution History
+![Execution History](docs/screenshots/Execution%20History.png)
+
+### Bug Tracker
+![Bug Tracker](docs/screenshots/Bug%20Tracker.png)
+
+### Reports & Analytics
+![Reports & Analytics](docs/screenshots/Reports%20%26%20Analytics.png)
 
 ## License
 
