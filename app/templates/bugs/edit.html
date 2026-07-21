@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% block title %}Edit {{ bug.bug_id }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-left">
+        <h2>Edit Bug</h2>
+        <p>{{ bug.bug_id }} · {{ bug.title }}</p>
+    </div>
+</div>
+
+<div class="card" style="max-width:800px;">
+    <form method="POST" action="{{ url_for('bug_links.edit', bug_db_id=bug.id) }}">
+        <div class="form-group">
+            <label class="form-label required" for="title">Title</label>
+            <input type="text" class="form-input" id="title" name="title" value="{{ bug.title }}" required>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label" for="description">Description</label>
+            <textarea class="form-textarea" id="description" name="description">{{ bug.description or '' }}</textarea>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label" for="steps_to_reproduce">Steps to Reproduce</label>
+            <textarea class="form-textarea" id="steps_to_reproduce" name="steps_to_reproduce" style="min-height:100px;">{{ bug.steps_to_reproduce or '' }}</textarea>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label" for="expected_result">Expected Result</label>
+                <textarea class="form-textarea" id="expected_result" name="expected_result" style="min-height:60px;">{{ bug.expected_result or '' }}</textarea>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="actual_result">Actual Result</label>
+                <textarea class="form-textarea" id="actual_result" name="actual_result" style="min-height:60px;">{{ bug.actual_result or '' }}</textarea>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label" for="severity">Severity</label>
+                <select class="form-select" id="severity" name="severity">
+                    {% for s in ['Critical','High','Medium','Low'] %}<option value="{{ s }}" {{ 'selected' if bug.severity==s }}>{{ s }}</option>{% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="priority">Priority</label>
+                <select class="form-select" id="priority" name="priority">
+                    {% for p in ['P1','P2','P3','P4'] %}<option value="{{ p }}" {{ 'selected' if bug.priority==p }}>{{ p }}</option>{% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="status">Status</label>
+                <select class="form-select" id="status" name="status">
+                    {% for s in ['Open','In Progress','Fixed','Retest','Closed','Rejected'] %}<option value="{{ s }}" {{ 'selected' if bug.status==s }}>{{ s }}</option>{% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label" for="module">Module</label>
+                <input type="text" class="form-input" id="module" name="module" value="{{ bug.module or '' }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="environment">Environment</label>
+                <input type="text" class="form-input" id="environment" name="environment" value="{{ bug.environment or '' }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="build_version">Build</label>
+                <input type="text" class="form-input" id="build_version" name="build_version" value="{{ bug.build_version or '' }}">
+            </div>
+        </div>
+
+        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:24px;">
+            <a href="{{ url_for('bug_links.view', bug_db_id=bug.id) }}" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

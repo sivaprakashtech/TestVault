@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+{% block title %}Test Cases{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-left">
+        <h2>Test Cases</h2>
+        <p>{{ pagination.total }} test case{{ 's' if pagination.total != 1 else '' }}</p>
+    </div>
+    <a href="{{ url_for('test_cases.create') }}" class="btn btn-primary">
+        <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/></svg>
+        New Test Case
+    </a>
+</div>
+
+<!-- Filter Bar -->
+<div class="filter-bar">
+    <form method="GET" action="{{ url_for('test_cases.index') }}" style="display:flex; gap:10px; flex-wrap:wrap; width:100%; align-items:center;">
+        <div class="search-wrapper" style="width:240px;">
+            <svg class="search-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/></svg>
+            <input type="text" class="search-input" name="search" placeholder="Search by title or ID..." value="{{ filters.search }}" style="height:36px;">
+        </div>
+        <select class="form-select" name="priority" style="min-width:110px; height:36px; padding:0 32px 0 10px; font-size:0.8rem;">
+            <option value="">Priority</option>
+            {% for p in ['Critical','High','Medium','Low'] %}
+            <option value="{{ p }}" {{ 'selected' if filters.priority == p }}>{{ p }}</option>
+            {% endfor %}
+        </select>
+        <select class="form-select" name="type" style="min-width:110px; height:36px; padding:0 32px 0 10px; font-size:0.8rem;">
+            <option value="">Type</option>
+            {% for t in ['Functional','Regression','Smoke','Sanity','API','UI'] %}
+            <option value="{{ t }}" {{ 'selected' if filters.type == t }}>{{ t }}</option>
+            {% endfor %}
+        </select>
+        <select class="form-select" name="status" style="min-width:100px; height:36px; padding:0 32px 0 10px; font-size:0.8rem;">
+            <option value="">Status</option>
+            {% for s in ['Draft','Ready','Active','Deprecated'] %}
+            <option value="{{ s }}" {{ 'selected' if filters.status == s }}>{{ s }}</option>
+            {% endfor %}
+        </select>
+        <select class="form-select" name="sort" style="min-width:110px; height:36px; padding:0 32px 0 10px; font-size:0.8rem;">
+            <option value="created_date" {{ 'selected' if filters.sort == 'created_date' }}>Newest</option>
+            <option value="title" {{ 'selected' if filters.sort == 'title' }}>Title</option>
+            <option value="priority" {{ 'selected' if filters.sort == 'priority' }}>Priority</option>
+            <option value="type" {{ 'selected' if filters.sort == 'type' }}>Type</option>
+        </select>
+        <button type="submit" class="btn btn-secondary btn-sm">Filter</button>
+        {% if filters.search or filters.priority or filters.type or filters.status %}
+        <a href="{{ url_for('test_cases.index') }}" class="btn btn-ghost btn-sm">Clear</a>
+        {% endif %}
+    </form>
+</div>
+
+{% if test_cases %}
+<div class="table-wrapper">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Title</th>
+                <th>Suite</th>
+                <th>Priority</th>
+                <th>Type</th>
+                <th>Status</th>
+                <th>Last Result</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for tc in test_cases %}
+            <tr class="{{ 'opacity-60' if tc.status == 'Deprecated' }}">
+                <td><code style="font-size:0.78rem; color:var(--accent-primary); font-weight:500;">{{ tc.test_id }}</code></td>
+                <td>
+                    <a href="{{ url_for('test_cases.view', case_id=tc.id) }}" style="color:var(--text-primary); text-decoration:none; font-weight:500;">{{ tc.title[:50] }}{{ '...' if tc.title|length > 50 }}</a>
+                </td>
+                <td style="font-size:0.8rem; color:var(--text-secondary);">{{ tc.suite_name or '-' }}</td>
+                <td><span class="badge badge-{{ tc.priority|lower }}">{{ tc.priority }}</span></td>
+                <td><span style="font-size:0.78rem; color:var(--text-secondary); background:var(--surface-hover); padding:2px 8px; border-radius:4px;">{{ tc.type or 'Functional' }}</span></td>
+                <td>
+                    {% if tc.status == 'Active' %}
+                    <span style="color:var(--color-success); font-size:0.78rem; font-weight:500;">● Active</span>
+                    {% elif tc.status == 'Ready' %}
+                    <span style="color:var(--accent-primary); font-size:0.78rem; font-weight:500;">● Ready</span>
+                    {% elif tc.status == 'Draft' %}
+                    <span style="color:var(--text-tertiary); font-size:0.78rem; font-weight:500;">● Draft</span>
+                    {% else %}
+                    <span style="color:var(--color-warning); font-size:0.78rem; font-weight:500;">● Deprecated</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if tc.last_result %}
+                    <span class="badge badge-{{ tc.last_result|lower|replace(' ', '-') }}">{{ tc.last_result }}</span>
+                    {% else %}
+                    <span style="color:var(--text-tertiary); font-size:0.78rem;">—</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <div style="display:flex; gap:4px;">
+                        <a href="{{ url_for('executions.execute', case_id=tc.id) }}" class="btn btn-ghost btn-sm" title="Execute">▶</a>
+                        <a href="{{ url_for('test_cases.edit', case_id=tc.id) }}" class="btn btn-ghost btn-sm" title="Edit">✎</a>
+                        <form method="POST" action="{{ url_for('test_cases.archive', case_id=tc.id) }}" style="display:inline;">
+                            <button type="submit" class="btn btn-ghost btn-sm" title="{{ 'Restore' if tc.status == 'Deprecated' else 'Archive' }}">{{ '↺' if tc.status == 'Deprecated' else '⊘' }}</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if pagination.total_pages > 1 %}
+<div class="pagination">
+    {% if pagination.page > 1 %}
+    <a href="{{ url_for('test_cases.index', page=pagination.page-1, search=filters.search, priority=filters.priority, type=filters.type, status=filters.status, sort=filters.sort) }}" class="pagination-btn">← Prev</a>
+    {% endif %}
+    {% for p in range(1, pagination.total_pages + 1) %}
+        {% if p == pagination.page %}
+        <span class="pagination-btn active">{{ p }}</span>
+        {% elif p <= 2 or p > pagination.total_pages - 2 or (p >= pagination.page - 1 and p <= pagination.page + 1) %}
+        <a href="{{ url_for('test_cases.index', page=p, search=filters.search, priority=filters.priority, type=filters.type, status=filters.status, sort=filters.sort) }}" class="pagination-btn">{{ p }}</a>
+        {% elif p == 3 or p == pagination.total_pages - 2 %}
+        <span class="pagination-btn" style="border:none;">...</span>
+        {% endif %}
+    {% endfor %}
+    {% if pagination.page < pagination.total_pages %}
+    <a href="{{ url_for('test_cases.index', page=pagination.page+1, search=filters.search, priority=filters.priority, type=filters.type, status=filters.status, sort=filters.sort) }}" class="pagination-btn">Next →</a>
+    {% endif %}
+</div>
+{% endif %}
+
+{% else %}
+<div class="empty-state">
+    <h3 class="empty-state-title">{% if filters.search or filters.priority or filters.type or filters.status %}No test cases match your filters{% else %}No test cases yet{% endif %}</h3>
+    <p class="empty-state-desc">{% if not filters.search and not filters.priority %}Create your first test case to start building your test library.{% else %}Try adjusting your filters.{% endif %}</p>
+    {% if not filters.search and not filters.priority %}
+    <a href="{{ url_for('test_cases.create') }}" class="btn btn-primary">Create Test Case</a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<style>.opacity-60{opacity:.6}.opacity-60:hover{opacity:1}</style>
+{% endblock %}

@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block title %}Edit Project{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-left">
+        <h2>Edit Project</h2>
+        <p>Update project details for <strong>{{ project.name }}</strong></p>
+    </div>
+</div>
+
+<div class="card" style="max-width:640px;">
+    <form method="POST" action="{{ url_for('projects.edit', project_id=project.id) }}">
+        <div class="form-group">
+            <label class="form-label required" for="name">Project Name</label>
+            <input type="text" class="form-input" id="name" name="name"
+                   value="{{ project.name }}" required>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label required" for="project_key">Project Key</label>
+            <input type="text" class="form-input" id="project_key" name="project_key"
+                   value="{{ project.project_key }}"
+                   style="text-transform:uppercase; font-family:monospace; letter-spacing:0.05em;"
+                   maxlength="10" required>
+            <span style="font-size:0.75rem; color:var(--text-tertiary); margin-top:4px; display:block;">
+                2-10 uppercase letters/numbers. Changing this won't rename existing test case IDs.
+            </span>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label" for="description">Description</label>
+            <textarea class="form-textarea" id="description" name="description"
+                      placeholder="Brief description of the project...">{{ project.description or '' }}</textarea>
+        </div>
+
+        <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:24px;">
+            <a href="{{ url_for('projects.view', project_id=project.id) }}" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary">
+                <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                Save Changes
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('project_key').addEventListener('input', function() {
+    this.value = this.value.toUpperCase().replace(/[^A-Z0-9_]/g, '');
+});
+</script>
+{% endblock %}

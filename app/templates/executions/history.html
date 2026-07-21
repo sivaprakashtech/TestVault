@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% block title %}Execution History - {{ test_case.test_id }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-left">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+            <a href="{{ url_for('test_cases.view', case_id=test_case.id) }}" style="color:var(--text-tertiary); text-decoration:none; font-size:0.82rem;">{{ test_case.test_id }}</a>
+            <span style="color:var(--text-tertiary); font-size:0.75rem;">›</span>
+            <span style="font-size:0.82rem; color:var(--text-secondary);">Execution History</span>
+        </div>
+        <h2>Execution History</h2>
+        <p>{{ test_case.test_id }} · {{ test_case.title }} · {{ executions|length }} execution{{ 's' if executions|length != 1 else '' }}</p>
+    </div>
+    <a href="{{ url_for('executions.execute', case_id=test_case.id) }}" class="btn btn-primary">Execute Again</a>
+</div>
+
+{% if executions %}
+<div class="table-wrapper">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Result</th>
+                <th>Environment</th>
+                <th>Build</th>
+                <th>Executed By</th>
+                <th>Date</th>
+                <th>Duration</th>
+                <th>Actual Result</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for exec in executions %}
+            <tr style="cursor:pointer;" onclick="window.location='{{ url_for('executions.view_result', exec_id=exec.id) }}'">
+                <td style="font-size:0.78rem; color:var(--text-tertiary);">#{{ exec.id }}</td>
+                <td><span class="badge badge-{{ exec.result|lower|replace(' ', '-') }}">{{ exec.result }}</span></td>
+                <td style="font-size:0.8rem;">{{ exec.environment or '-' }}</td>
+                <td style="font-size:0.8rem; color:var(--text-tertiary);">{{ exec.build_version or '-' }}</td>
+                <td style="font-size:0.8rem;">{{ exec.executor_name or 'Unknown' }}</td>
+                <td style="font-size:0.78rem; color:var(--text-tertiary);">{{ exec.execution_date[:16] if exec.execution_date else '-' }}</td>
+                <td style="font-size:0.78rem; color:var(--text-tertiary);">{{ (exec.duration|string + 's') if exec.duration else '-' }}</td>
+                <td style="font-size:0.78rem; color:var(--text-secondary); max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ exec.actual_result[:50] if exec.actual_result else '-' }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="empty-state">
+    <h3 class="empty-state-title">No executions yet</h3>
+    <p class="empty-state-desc">This test case hasn't been executed yet.</p>
+    <a href="{{ url_for('executions.execute', case_id=test_case.id) }}" class="btn btn-primary">Execute Now</a>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<style>.badge-not-run{background:var(--surface-hover);color:var(--text-tertiary);border:1px solid var(--border-primary);}</style>
+{% endblock %}

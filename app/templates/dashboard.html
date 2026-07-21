@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-left">
+        <h2>Dashboard</h2>
+        <p>Overview of your QA testing activities</p>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="stats-grid" id="statsGrid">
+    <div class="stat-card" style="--stat-color: var(--accent-primary)">
+        <div class="stat-card-icon" style="background: var(--accent-primary-subtle); color: var(--accent-primary);">
+            <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"/></svg>
+        </div>
+        <div class="stat-card-value" id="totalCases">-</div>
+        <div class="stat-card-label">Total Test Cases</div>
+    </div>
+    <div class="stat-card" style="--stat-color: var(--color-success)">
+        <div class="stat-card-icon" style="background: var(--color-success-subtle); color: var(--color-success);">
+            <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+        </div>
+        <div class="stat-card-value" id="passedCount">-</div>
+        <div class="stat-card-label">Passed</div>
+    </div>
+    <div class="stat-card" style="--stat-color: var(--color-danger)">
+        <div class="stat-card-icon" style="background: var(--color-danger-subtle); color: var(--color-danger);">
+            <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>
+        </div>
+        <div class="stat-card-value" id="failedCount">-</div>
+        <div class="stat-card-label">Failed</div>
+    </div>
+    <div class="stat-card" style="--stat-color: var(--color-blocked)">
+        <div class="stat-card-icon" style="background: var(--color-blocked-subtle); color: var(--color-blocked);">
+            <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M13.477 14.89A6 6 0 015.11 6.524l8.367 8.368zm1.414-1.414L6.524 5.11a6 6 0 018.367 8.367zM18 10a8 8 0 11-16 0 8 8 0 0116 0z" clip-rule="evenodd"/></svg>
+        </div>
+        <div class="stat-card-value" id="blockedCount">-</div>
+        <div class="stat-card-label">Blocked</div>
+    </div>
+    <div class="stat-card" style="--stat-color: var(--text-tertiary)">
+        <div class="stat-card-icon" style="background: var(--surface-hover); color: var(--text-tertiary);">
+            <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/></svg>
+        </div>
+        <div class="stat-card-value" id="notExecCount">-</div>
+        <div class="stat-card-label">Not Executed</div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="charts-grid">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Execution Trend</h3>
+            <span class="card-subtitle">Last 30 days</span>
+        </div>
+        <div class="chart-container">
+            <canvas id="trendChart"></canvas>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Priority Distribution</h3>
+            <span class="card-subtitle">All test cases</span>
+        </div>
+        <div class="chart-container">
+            <canvas id="priorityChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Second Charts Row -->
+<div class="charts-grid">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Module-wise Pass %</h3>
+            <span class="card-subtitle">By module</span>
+        </div>
+        <div class="chart-container">
+            <canvas id="moduleChart"></canvas>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Severity Distribution</h3>
+            <span class="card-subtitle">All test cases</span>
+        </div>
+        <div class="chart-container">
+            <canvas id="severityChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity -->
+<div class="two-col-grid">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Recent Test Cases</h3>
+        </div>
+        <ul class="activity-list" id="recentCases">
+            <li class="activity-item">
+                <div class="activity-content">
+                    <span class="activity-title" style="color: var(--text-tertiary)">Loading...</span>
+                </div>
+            </li>
+        </ul>
+    </div>
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Recent Executions</h3>
+        </div>
+        <ul class="activity-list" id="recentExecutions">
+            <li class="activity-item">
+                <div class="activity-content">
+                    <span class="activity-title" style="color: var(--text-tertiary)">Loading...</span>
+                </div>
+            </li>
+        </ul>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

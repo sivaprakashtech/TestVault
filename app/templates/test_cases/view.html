@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+{% block title %}{{ test_case.test_id }} - {{ test_case.title }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-left">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+            <a href="{{ url_for('projects.view', project_id=test_case.project_id) }}" style="color:var(--text-tertiary); text-decoration:none; font-size:0.82rem;">{{ test_case.project_name }}</a>
+            <span style="color:var(--text-tertiary); font-size:0.75rem;">›</span>
+            <a href="{{ url_for('test_suites.view', suite_id=test_case.suite_id) }}" style="color:var(--text-tertiary); text-decoration:none; font-size:0.82rem;">{{ test_case.suite_name }}</a>
+            <span style="color:var(--text-tertiary); font-size:0.75rem;">›</span>
+            <span style="font-size:0.82rem; color:var(--text-secondary);">{{ test_case.test_id }}</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px;">
+            <h2>{{ test_case.title }}</h2>
+        </div>
+        <div style="display:flex; gap:6px; margin-top:6px;">
+            <code style="font-size:0.78rem; color:var(--accent-primary); background:var(--accent-primary-subtle); padding:2px 8px; border-radius:4px;">{{ test_case.test_id }}</code>
+            <span class="badge badge-{{ test_case.priority|lower }}">{{ test_case.priority }}</span>
+            <span style="font-size:0.75rem; color:var(--text-secondary); background:var(--surface-hover); padding:2px 8px; border-radius:4px;">{{ test_case.type or 'Functional' }}</span>
+            {% if test_case.status == 'Active' %}
+            <span style="font-size:0.75rem; color:var(--color-success); background:var(--color-success-subtle); padding:2px 8px; border-radius:4px;">Active</span>
+            {% elif test_case.status == 'Ready' %}
+            <span style="font-size:0.75rem; color:var(--accent-primary); background:var(--accent-primary-subtle); padding:2px 8px; border-radius:4px;">Ready</span>
+            {% elif test_case.status == 'Draft' %}
+            <span style="font-size:0.75rem; color:var(--text-tertiary); background:var(--surface-hover); padding:2px 8px; border-radius:4px;">Draft</span>
+            {% else %}
+            <span style="font-size:0.75rem; color:var(--color-warning); background:var(--color-warning-subtle); padding:2px 8px; border-radius:4px;">Deprecated</span>
+            {% endif %}
+        </div>
+    </div>
+    <div style="display:flex; gap:8px;">
+        <a href="{{ url_for('executions.execute', case_id=test_case.id) }}" class="btn btn-primary">▶ Execute</a>
+        <form method="POST" action="{{ url_for('test_cases.duplicate', case_id=test_case.id) }}" style="display:inline;">
+            <button type="submit" class="btn btn-secondary">Duplicate</button>
+        </form>
+        <a href="{{ url_for('test_cases.edit', case_id=test_case.id) }}" class="btn btn-secondary">Edit</a>
+        <form method="POST" action="{{ url_for('test_cases.archive', case_id=test_case.id) }}" style="display:inline;">
+            <button type="submit" class="btn btn-secondary">{{ 'Restore' if test_case.status == 'Deprecated' else 'Archive' }}</button>
+        </form>
+        <form method="POST" action="{{ url_for('test_cases.delete', case_id=test_case.id) }}" style="display:inline;" onsubmit="return confirm('Delete this test case permanently?')">
+            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+        </form>
+    </div>
+</div>
+
+<div style="display:grid; grid-template-columns:1fr 280px; gap:20px;">
+    <!-- Main Content -->
+    <div>
+        {% if test_case.description %}
+        <div class="card mb-2">
+            <h4 style="font-size:0.78rem; text-transform:uppercase; letter-spacing:0.04em; color:var(--text-tertiary); margin-bottom:8px;">Description</h4>
+            <p style="color:var(--text-secondary); font-size:0.88rem; white-space:pre-wrap;">{{ test_case.description }}</p>
+        </div>
+        {% endif %}
+
+        {% if test_case.preconditions %}
+        <div class="card mb-2">
+            <h4 style="font-size:0.78rem; text-transform:uppercase; letter-spacing:0.04em; color:var(--text-tertiary); margin-bottom:8px;">Preconditions</h4>
+            <p style="color:var(--text-secondary); font-size:0.88rem; white-space:pre-wrap;">{{ test_case.preconditions }}</p>
+        </div>
+        {% endif %}
+
+        <div class="card mb-2">
+            <h4 style="font-size:0.78rem; text-transform:uppercase; letter-spacing:0.04em; color:var(--text-tertiary); margin-bottom:8px;">Test Steps</h4>
+            <p style="color:var(--text-primary); font-size:0.88rem; white-space:pre-wrap; line-height:1.8;">{{ test_case.steps }}</p>
+        </div>
+
+        <div class="card mb-2">
+            <h4 style="font-size:0.78rem; text-transform:uppercase; letter-spacing:0.04em; color:var(--text-tertiary); margin-bottom:8px;">Expected Result</h4>
+            <p style="color:var(--text-primary); font-size:0.88rem; white-space:pre-wrap;">{{ test_case.expected_result }}</p>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div>
+        <div class="card">
+            <div style="display:flex; flex-direction:column; gap:14px; font-size:0.84rem;">
+                <div>
+                    <span style="color:var(--text-tertiary); display:block; margin-bottom:4px;">Priority</span>
+                    <span class="badge badge-{{ test_case.priority|lower }}">{{ test_case.priority }}</span>
+                </div>
+                <div>
+                    <span style="color:var(--text-tertiary); display:block; margin-bottom:4px;">Severity</span>
+                    <span>{{ test_case.severity or 'Major' }}</span>
+                </div>
+                <div>
+                    <span style="color:var(--text-tertiary); display:block; margin-bottom:4px;">Type</span>
+                    <span>{{ test_case.type or 'Functional' }}</span>
+                </div>
+                <div>
+                    <span style="color:var(--text-tertiary); display:block; margin-bottom:4px;">Module</span>
+                    <span>{{ test_case.module or '—' }}</span>
+                </div>
+                <div>
+                    <span style="color:var(--text-tertiary); display:block; margin-bottom:4px;">Feature</span>
+                    <span>{{ test_case.feature or '—' }}</span>
+                </div>
+                <div>
+                    <span style="color:var(--text-tertiary); display:block; margin-bottom:4px;">Created By</span>
+                    <span>{{ test_case.creator_name or 'Unknown' }}</span>
+                </div>
+                <div>
+                    <span style="color:var(--text-tertiary); display:block; margin-bottom:4px;">Created</span>
+                    <span>{{ test_case.created_date[:10] if test_case.created_date else '-' }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-2">
+            <h4 style="font-size:0.78rem; text-transform:uppercase; letter-spacing:0.04em; color:var(--text-tertiary); margin-bottom:12px;">Quick Actions</h4>
+            <div style="display:flex; flex-direction:column; gap:6px;">
+                <a href="{{ url_for('executions.execute', case_id=test_case.id) }}" class="btn btn-primary btn-sm w-full">Execute Test</a>
+                <a href="{{ url_for('executions.history', case_id=test_case.id) }}" class="btn btn-secondary btn-sm w-full">Execution History</a>
+                <a href="{{ url_for('bug_links.link', case_id=test_case.id) }}" class="btn btn-secondary btn-sm w-full">Link Bug</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

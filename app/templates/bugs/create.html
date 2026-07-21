@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% block title %}Report Bug{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-left">
+        <h2>Report Bug</h2>
+        <p>Log a new defect</p>
+    </div>
+</div>
+
+<div class="card" style="max-width:800px;">
+    <form method="POST" action="{{ url_for('bug_links.create') }}">
+        {% if data.get('link_case_id') %}
+        <input type="hidden" name="link_case_id" value="{{ data.link_case_id }}">
+        <input type="hidden" name="link_execution_id" value="{{ data.get('link_execution_id', '') }}">
+        {% endif %}
+
+        <div class="form-group">
+            <label class="form-label required" for="title">Bug Title</label>
+            <input type="text" class="form-input" id="title" name="title" placeholder="Clear, concise bug summary" value="{{ data.get('title', '') }}" required>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label" for="description">Description</label>
+            <textarea class="form-textarea" id="description" name="description" placeholder="Detailed description of the issue...">{{ data.get('description', '') }}</textarea>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label" for="steps_to_reproduce">Steps to Reproduce</label>
+            <textarea class="form-textarea" id="steps_to_reproduce" name="steps_to_reproduce" style="min-height:100px;" placeholder="1. Go to...&#10;2. Click...&#10;3. Observe...">{{ data.get('steps_to_reproduce', '') }}</textarea>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label" for="expected_result">Expected Result</label>
+                <textarea class="form-textarea" id="expected_result" name="expected_result" style="min-height:60px;" placeholder="What should happen">{{ data.get('expected_result', '') }}</textarea>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="actual_result">Actual Result</label>
+                <textarea class="form-textarea" id="actual_result" name="actual_result" style="min-height:60px;" placeholder="What actually happens">{{ data.get('actual_result', '') }}</textarea>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label required" for="severity">Severity</label>
+                <select class="form-select" id="severity" name="severity">
+                    {% for s in ['Critical','High','Medium','Low'] %}<option value="{{ s }}" {{ 'selected' if data.get('severity','Medium')==s }}>{{ s }}</option>{% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label required" for="priority">Priority</label>
+                <select class="form-select" id="priority" name="priority">
+                    {% for p in ['P1','P2','P3','P4'] %}<option value="{{ p }}" {{ 'selected' if data.get('priority','P2')==p }}>{{ p }}</option>{% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="status">Status</label>
+                <select class="form-select" id="status" name="status">
+                    {% for s in ['Open','In Progress','Fixed','Retest','Closed','Rejected'] %}<option value="{{ s }}" {{ 'selected' if data.get('status','Open')==s }}>{{ s }}</option>{% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label" for="module">Module</label>
+                <input type="text" class="form-input" id="module" name="module" value="{{ data.get('module', '') }}" placeholder="e.g., Authentication">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="environment">Environment</label>
+                <input type="text" class="form-input" id="environment" name="environment" value="{{ data.get('environment', '') }}" placeholder="e.g., QA / UAT">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="build_version">Build</label>
+                <input type="text" class="form-input" id="build_version" name="build_version" value="{{ data.get('build_version', '') }}" placeholder="v1.2.3">
+            </div>
+        </div>
+
+        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:24px;">
+            <a href="{{ url_for('bug_links.index') }}" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary">Report Bug</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

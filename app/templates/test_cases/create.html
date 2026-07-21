@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+{% block title %}Create Test Case{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-left">
+        <h2>Create Test Case</h2>
+        <p>Add a new test case to your test library</p>
+    </div>
+</div>
+
+<div class="card" style="max-width:800px;">
+    <form method="POST" action="{{ url_for('test_cases.create') }}">
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label required" for="suite_id">Test Suite</label>
+                <select class="form-select" id="suite_id" name="suite_id" required>
+                    <option value="">Select a suite...</option>
+                    {% for suite in suites %}
+                    <option value="{{ suite.id }}" {{ 'selected' if data.get('suite_id')|string == suite.id|string }}>
+                        {{ suite.project_name }} › {{ suite.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label required" for="type">Type</label>
+                <select class="form-select" id="type" name="type" required>
+                    {% for t in ['Functional','Regression','Smoke','Sanity','API','UI'] %}
+                    <option value="{{ t }}" {{ 'selected' if data.get('type', 'Functional') == t }}>{{ t }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label required" for="title">Title</label>
+            <input type="text" class="form-input" id="title" name="title" placeholder="Clear, descriptive title" value="{{ data.get('title', '') }}" required>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label" for="description">Description</label>
+            <textarea class="form-textarea" id="description" name="description" placeholder="What does this test verify?">{{ data.get('description', '') }}</textarea>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label" for="preconditions">Preconditions</label>
+            <textarea class="form-textarea" id="preconditions" name="preconditions" style="min-height:60px;" placeholder="What must be true before executing?">{{ data.get('preconditions', '') }}</textarea>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label required" for="steps">Test Steps</label>
+            <textarea class="form-textarea" id="steps" name="steps" style="min-height:120px;" placeholder="1. Navigate to...&#10;2. Click on...&#10;3. Enter..." required>{{ data.get('steps', '') }}</textarea>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label required" for="expected_result">Expected Result</label>
+            <textarea class="form-textarea" id="expected_result" name="expected_result" style="min-height:80px;" placeholder="What should happen after steps are executed?" required>{{ data.get('expected_result', '') }}</textarea>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label required" for="priority">Priority</label>
+                <select class="form-select" id="priority" name="priority" required>
+                    {% for p in ['Critical','High','Medium','Low'] %}
+                    <option value="{{ p }}" {{ 'selected' if data.get('priority', 'Medium') == p }}>{{ p }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="severity">Severity</label>
+                <select class="form-select" id="severity" name="severity">
+                    {% for s in ['Blocker','Critical','Major','Minor','Trivial'] %}
+                    <option value="{{ s }}" {{ 'selected' if data.get('severity', 'Major') == s }}>{{ s }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="status">Status</label>
+                <select class="form-select" id="status" name="status">
+                    {% for s in ['Draft','Ready','Active'] %}
+                    <option value="{{ s }}" {{ 'selected' if data.get('status', 'Draft') == s }}>{{ s }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label" for="module">Module</label>
+                <input type="text" class="form-input" id="module" name="module" placeholder="e.g., Authentication" value="{{ data.get('module', '') }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="feature">Feature</label>
+                <input type="text" class="form-input" id="feature" name="feature" placeholder="e.g., Login" value="{{ data.get('feature', '') }}">
+            </div>
+        </div>
+
+        <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:24px;">
+            <a href="{{ url_for('test_cases.index') }}" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary">Create Test Case</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

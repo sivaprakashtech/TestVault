@@ -1,0 +1,301 @@
+{% extends 'base.html' %}
+{% block title %}Projects{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-left">
+        <h2>Projects</h2>
+        <p>{{ counts.total }} project{{ 's' if counts.total != 1 else '' }} · {{ counts.Active }} active · {{ counts.Archived }} archived</p>
+    </div>
+    <a href="{{ url_for('projects.create') }}" class="btn btn-primary">
+        <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/></svg>
+        New Project
+    </a>
+</div>
+
+<!-- Filter Bar -->
+<div class="filter-bar">
+    <form method="GET" action="{{ url_for('projects.index') }}" style="display:flex; gap:10px; flex-wrap:wrap; width:100%; align-items:center;">
+        <div class="search-wrapper" style="width:280px;">
+            <svg class="search-icon" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/>
+            </svg>
+            <input type="text" class="search-input" name="search" placeholder="Search projects..."
+                   value="{{ filters.search }}" style="height:36px;">
+        </div>
+        <select class="form-select" name="status" style="min-width:140px; height:36px; padding:0 32px 0 12px; font-size:0.82rem;">
+            <option value="">All Status</option>
+            <option value="Active" {{ 'selected' if filters.status == 'Active' }}>Active</option>
+            <option value="Archived" {{ 'selected' if filters.status == 'Archived' }}>Archived</option>
+        </select>
+        <select class="form-select" name="sort" style="min-width:140px; height:36px; padding:0 32px 0 12px; font-size:0.82rem;">
+            <option value="created_date" {{ 'selected' if filters.sort == 'created_date' }}>Date Created</option>
+            <option value="name" {{ 'selected' if filters.sort == 'name' }}>Name</option>
+            <option value="updated_date" {{ 'selected' if filters.sort == 'updated_date' }}>Last Updated</option>
+        </select>
+        <select class="form-select" name="order" style="min-width:100px; height:36px; padding:0 32px 0 12px; font-size:0.82rem;">
+            <option value="DESC" {{ 'selected' if filters.order == 'DESC' }}>Newest</option>
+            <option value="ASC" {{ 'selected' if filters.order == 'ASC' }}>Oldest</option>
+        </select>
+        <button type="submit" class="btn btn-secondary btn-sm">Apply</button>
+        {% if filters.search or filters.status %}
+        <a href="{{ url_for('projects.index') }}" class="btn btn-ghost btn-sm">Clear</a>
+        {% endif %}
+    </form>
+</div>
+
+{% if projects %}
+<!-- Project Cards Grid -->
+<div class="project-grid">
+    {% for project in projects %}
+    <div class="project-card {{ 'project-card-archived' if project.status == 'Archived' }}">
+        <div class="project-card-header">
+            <div class="project-card-title-row">
+                <a href="{{ url_for('projects.view', project_id=project.id) }}" class="project-card-name">{{ project.name }}</a>
+                <span class="project-key-badge">{{ project.project_key }}</span>
+            </div>
+            <div class="project-card-status">
+                {% if project.status == 'Active' %}
+                <span class="status-dot status-dot-active"></span>
+                {% else %}
+                <span class="status-dot status-dot-archived"></span>
+                {% endif %}
+                <span style="font-size:0.72rem; color:var(--text-tertiary);">{{ project.status }}</span>
+            </div>
+        </div>
+
+        <p class="project-card-desc">{{ project.description[:120] if project.description else 'No description' }}{{ '...' if project.description and project.description|length > 120 else '' }}</p>
+
+        <div class="project-card-stats">
+            <div class="project-stat">
+                <span class="project-stat-value">{{ project.suite_count or 0 }}</span>
+                <span class="project-stat-label">Suites</span>
+            </div>
+            <div class="project-stat">
+                <span class="project-stat-value">{{ project.case_count or 0 }}</span>
+                <span class="project-stat-label">Cases</span>
+            </div>
+            <div class="project-stat">
+                <span class="project-stat-value">{{ project.exec_count or 0 }}</span>
+                <span class="project-stat-label">Executions</span>
+            </div>
+            <div class="project-stat">
+                {% set pass_pct = ((project.passed_count / project.exec_count * 100) | round(0) | int) if project.exec_count else 0 %}
+                <span class="project-stat-value {{ 'text-success' if pass_pct >= 70 else 'text-warning' if pass_pct >= 40 else 'text-danger' if project.exec_count else '' }}">{{ pass_pct }}%</span>
+                <span class="project-stat-label">Pass Rate</span>
+            </div>
+        </div>
+
+        <div class="project-card-footer">
+            <span class="project-card-meta">
+                {{ project.creator_name or 'Unknown' }} · {{ project.created_date[:10] if project.created_date else '' }}
+            </span>
+            <div class="project-card-actions">
+                <a href="{{ url_for('projects.edit', project_id=project.id) }}" class="btn btn-ghost btn-sm" title="Edit">
+                    <svg viewBox="0 0 20 20" fill="currentColor" style="width:14px;height:14px;"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"/></svg>
+                </a>
+                <form method="POST" action="{{ url_for('projects.archive', project_id=project.id) }}" style="display:inline;">
+                    <button type="submit" class="btn btn-ghost btn-sm" title="{{ 'Activate' if project.status == 'Archived' else 'Archive' }}">
+                        {% if project.status == 'Active' %}
+                        <svg viewBox="0 0 20 20" fill="currentColor" style="width:14px;height:14px;"><path d="M4 3a2 2 0 100 4h12a2 2 0 100-4H4z"/><path fill-rule="evenodd" d="M3 8h14v7a2 2 0 01-2 2H5a2 2 0 01-2-2V8zm5 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" clip-rule="evenodd"/></svg>
+                        {% else %}
+                        <svg viewBox="0 0 20 20" fill="currentColor" style="width:14px;height:14px;color:var(--color-success);"><path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd"/></svg>
+                        {% endif %}
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Pagination -->
+{% if pagination.total_pages > 1 %}
+<div class="pagination">
+    {% if pagination.page > 1 %}
+    <a href="{{ url_for('projects.index', page=pagination.page - 1, search=filters.search, status=filters.status, sort=filters.sort, order=filters.order) }}" class="pagination-btn">← Prev</a>
+    {% endif %}
+    {% for p in range(1, pagination.total_pages + 1) %}
+        {% if p == pagination.page %}
+        <span class="pagination-btn active">{{ p }}</span>
+        {% elif p <= 2 or p > pagination.total_pages - 2 or (p >= pagination.page - 1 and p <= pagination.page + 1) %}
+        <a href="{{ url_for('projects.index', page=p, search=filters.search, status=filters.status, sort=filters.sort, order=filters.order) }}" class="pagination-btn">{{ p }}</a>
+        {% elif p == 3 or p == pagination.total_pages - 2 %}
+        <span class="pagination-btn" style="border:none; cursor:default;">...</span>
+        {% endif %}
+    {% endfor %}
+    {% if pagination.page < pagination.total_pages %}
+    <a href="{{ url_for('projects.index', page=pagination.page + 1, search=filters.search, status=filters.status, sort=filters.sort, order=filters.order) }}" class="pagination-btn">Next →</a>
+    {% endif %}
+</div>
+{% endif %}
+
+{% else %}
+<div class="empty-state">
+    <svg class="empty-state-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4l2 2h4a2 2 0 012 2v1H8a3 3 0 00-3 3v1.5a1.5 1.5 0 01-3 0V6z" clip-rule="evenodd"/><path d="M6 12a2 2 0 012-2h8a2 2 0 012 2v2a2 2 0 01-2 2H2h2a2 2 0 002-2v-2z"/></svg>
+    <h3 class="empty-state-title">
+        {% if filters.search or filters.status %}
+            No projects match your filters
+        {% else %}
+            No projects yet
+        {% endif %}
+    </h3>
+    <p class="empty-state-desc">
+        {% if filters.search or filters.status %}
+            Try adjusting your search or status filter.
+        {% else %}
+            Create your first project to start organizing test suites and test cases.
+        {% endif %}
+    </p>
+    {% if not filters.search and not filters.status %}
+    <a href="{{ url_for('projects.create') }}" class="btn btn-primary">Create Project</a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.project-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 16px;
+}
+
+.project-card {
+    background: var(--surface-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: 12px;
+    padding: 20px;
+    transition: all 0.2s ease;
+    backdrop-filter: blur(10px);
+    display: flex;
+    flex-direction: column;
+}
+
+.project-card:hover {
+    border-color: var(--border-focus);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
+}
+
+.project-card-archived {
+    opacity: 0.7;
+}
+
+.project-card-archived:hover {
+    opacity: 1;
+}
+
+.project-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.project-card-title-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.project-card-name {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    text-decoration: none;
+    transition: color 0.15s;
+}
+
+.project-card-name:hover {
+    color: var(--accent-primary);
+}
+
+.project-key-badge {
+    font-size: 0.68rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: var(--accent-primary-subtle);
+    color: var(--accent-primary);
+    letter-spacing: 0.03em;
+    font-family: monospace;
+}
+
+.project-card-status {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+}
+
+.status-dot-active { background: var(--color-success); }
+.status-dot-archived { background: var(--text-tertiary); }
+
+.project-card-desc {
+    font-size: 0.84rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin-bottom: 16px;
+    min-height: 42px;
+    flex: 1;
+}
+
+.project-card-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    padding: 12px 0;
+    border-top: 1px solid var(--border-secondary);
+    border-bottom: 1px solid var(--border-secondary);
+    margin-bottom: 12px;
+}
+
+.project-stat {
+    text-align: center;
+}
+
+.project-stat-value {
+    display: block;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.project-stat-label {
+    display: block;
+    font-size: 0.68rem;
+    color: var(--text-tertiary);
+    margin-top: 2px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.text-success { color: var(--color-success) !important; }
+.text-warning { color: var(--color-warning) !important; }
+.text-danger { color: var(--color-danger) !important; }
+
+.project-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.project-card-meta {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+}
+
+.project-card-actions {
+    display: flex;
+    gap: 4px;
+}
+</style>
+{% endblock %}

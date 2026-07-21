@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+{% block title %}{{ suite.name }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-left">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+            <a href="{{ url_for('projects.view', project_id=suite.project_id) }}" style="color:var(--text-tertiary); text-decoration:none; font-size:0.82rem;">{{ suite.project_name }}</a>
+            <span style="color:var(--text-tertiary); font-size:0.75rem;">›</span>
+            <a href="{{ url_for('test_suites.by_project', project_id=suite.project_id) }}" style="color:var(--text-tertiary); text-decoration:none; font-size:0.82rem;">Test Suites</a>
+            <span style="color:var(--text-tertiary); font-size:0.75rem;">›</span>
+            <span style="font-size:0.82rem; color:var(--text-secondary);">{{ suite.name }}</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px;">
+            <h2>{{ suite.name }}</h2>
+            <span class="badge badge-{{ suite.priority|lower }}">{{ suite.priority }}</span>
+            {% if suite.status == 'Active' %}
+            <span class="badge badge-passed">Active</span>
+            {% else %}
+            <span class="badge badge-not-executed">Archived</span>
+            {% endif %}
+        </div>
+        <p>{{ suite.description or 'No description provided.' }}</p>
+    </div>
+    <div style="display:flex; gap:8px;">
+        <a href="{{ url_for('test_cases.index') }}?suite_id={{ suite.id }}" class="btn btn-primary">
+            <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"/></svg>
+            Test Cases
+        </a>
+        <a href="{{ url_for('test_suites.edit', suite_id=suite.id) }}" class="btn btn-secondary">Edit</a>
+        <form method="POST" action="{{ url_for('test_suites.archive', suite_id=suite.id) }}" style="display:inline;">
+            <button type="submit" class="btn btn-secondary">
+                {{ 'Activate' if suite.status == 'Archived' else 'Archive' }}
+            </button>
+        </form>
+        <form method="POST" action="{{ url_for('test_suites.delete', suite_id=suite.id) }}" style="display:inline;"
+              onsubmit="return confirm('Delete this suite and ALL its test cases? This cannot be undone.')">
+            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+        </form>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));">
+    <div class="stat-card" style="--stat-color: var(--accent-primary)">
+        <div class="stat-card-icon" style="background: var(--accent-primary-subtle); color: var(--accent-primary);">
+            <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"/></svg>
+        </div>
+        <div class="stat-card-value">{{ suite.case_count or 0 }}</div>
+        <div class="stat-card-label">Test Cases</div>
+    </div>
+    <div class="stat-card" style="--stat-color: var(--color-success)">
+        <div class="stat-card-icon" style="background: var(--color-success-subtle); color: var(--color-success);">
+            <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+        </div>
+        <div class="stat-card-value">{{ suite.passed_count or 0 }}</div>
+        <div class="stat-card-label">Passed</div>
+    </div>
+    <div class="stat-card" style="--stat-color: var(--color-danger)">
+        <div class="stat-card-icon" style="background: var(--color-danger-subtle); color: var(--color-danger);">
+            <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>
+        </div>
+        <div class="stat-card-value">{{ suite.failed_count or 0 }}</div>
+        <div class="stat-card-label">Failed</div>
+    </div>
+    <div class="stat-card" style="--stat-color: var(--color-blocked)">
+        <div class="stat-card-icon" style="background: var(--color-blocked-subtle); color: var(--color-blocked);">
+            <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M13.477 14.89A6 6 0 015.11 6.524l8.367 8.368zm1.414-1.414L6.524 5.11a6 6 0 018.367 8.367zM18 10a8 8 0 11-16 0 8 8 0 0116 0z" clip-rule="evenodd"/></svg>
+        </div>
+        <div class="stat-card-value">{{ suite.blocked_count or 0 }}</div>
+        <div class="stat-card-label">Blocked</div>
+    </div>
+    <div class="stat-card" style="--stat-color: var(--color-warning)">
+        <div class="stat-card-icon" style="background: var(--color-warning-subtle); color: var(--color-warning);">
+            <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 3a1 1 0 000 2v8a2 2 0 002 2h2.586l-1.293 1.293a1 1 0 101.414 1.414L10 15.414l2.293 2.293a1 1 0 001.414-1.414L12.414 15H15a2 2 0 002-2V5a1 1 0 100-2H3z" clip-rule="evenodd"/></svg>
+        </div>
+        {% set pass_rate = ((suite.passed_count / suite.exec_count * 100) | round(1)) if suite.exec_count else 0 %}
+        <div class="stat-card-value">{{ pass_rate }}%</div>
+        <div class="stat-card-label">Pass Rate</div>
+    </div>
+</div>
+
+<!-- Suite Info -->
+<div class="two-col-grid">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Suite Information</h3>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:14px; font-size:0.85rem;">
+            <div style="display:flex; justify-content:space-between;">
+                <span style="color:var(--text-tertiary);">Project</span>
+                <a href="{{ url_for('projects.view', project_id=suite.project_id) }}" style="color:var(--accent-primary); text-decoration:none;">{{ suite.project_name }}</a>
+            </div>
+            <div style="display:flex; justify-content:space-between;">
+                <span style="color:var(--text-tertiary);">Priority</span>
+                <span class="badge badge-{{ suite.priority|lower }}">{{ suite.priority }}</span>
+            </div>
+            <div style="display:flex; justify-content:space-between;">
+                <span style="color:var(--text-tertiary);">Status</span>
+                <span>{{ suite.status }}</span>
+            </div>
+            <div style="display:flex; justify-content:space-between;">
+                <span style="color:var(--text-tertiary);">Created By</span>
+                <span>{{ suite.creator_name or 'Unknown' }}</span>
+            </div>
+            <div style="display:flex; justify-content:space-between;">
+                <span style="color:var(--text-tertiary);">Created</span>
+                <span>{{ suite.created_date[:10] if suite.created_date else '-' }}</span>
+            </div>
+            <div style="display:flex; justify-content:space-between;">
+                <span style="color:var(--text-tertiary);">Last Updated</span>
+                <span>{{ suite.updated_date[:10] if suite.updated_date else '-' }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Execution Summary</h3>
+        </div>
+        {% if suite.exec_count %}
+        <div style="margin-bottom:16px;">
+            <div style="height:8px; background:var(--surface-hover); border-radius:4px; overflow:hidden; display:flex;">
+                {% set total = suite.exec_count %}
+                {% if suite.passed_count %}
+                <div style="width:{{ (suite.passed_count / total * 100) }}%; background:var(--color-success);"></div>
+                {% endif %}
+                {% if suite.failed_count %}
+                <div style="width:{{ (suite.failed_count / total * 100) }}%; background:var(--color-danger);"></div>
+                {% endif %}
+                {% if suite.blocked_count %}
+                <div style="width:{{ (suite.blocked_count / total * 100) }}%; background:var(--color-blocked);"></div>
+                {% endif %}
+            </div>
+        </div>
+        <div style="display:flex; gap:16px; font-size:0.82rem; flex-wrap:wrap;">
+            <span style="display:flex; align-items:center; gap:4px;"><span style="width:8px;height:8px;border-radius:50%;background:var(--color-success);"></span> Passed: {{ suite.passed_count }}</span>
+            <span style="display:flex; align-items:center; gap:4px;"><span style="width:8px;height:8px;border-radius:50%;background:var(--color-danger);"></span> Failed: {{ suite.failed_count }}</span>
+            <span style="display:flex; align-items:center; gap:4px;"><span style="width:8px;height:8px;border-radius:50%;background:var(--color-blocked);"></span> Blocked: {{ suite.blocked_count }}</span>
+        </div>
+        {% else %}
+        <p style="color:var(--text-tertiary); font-size:0.85rem;">No executions recorded yet.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% block title %}Execution Result{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-left">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+            <a href="{{ url_for('test_cases.view', case_id=execution.test_case_id) }}" style="color:var(--text-tertiary); text-decoration:none; font-size:0.82rem;">{{ execution.test_id }}</a>
+            <span style="color:var(--text-tertiary); font-size:0.75rem;">›</span>
+            <span style="font-size:0.82rem; color:var(--text-secondary);">Execution #{{ execution.id }}</span>
+        </div>
+        <h2>Execution Result</h2>
+        <div style="display:flex; gap:8px; margin-top:6px;">
+            <span class="badge badge-{{ execution.result|lower|replace(' ', '-') }}" style="font-size:0.82rem; padding:4px 12px;">{{ execution.result }}</span>
+            <span style="font-size:0.82rem; color:var(--text-secondary);">{{ execution.test_title }}</span>
+        </div>
+    </div>
+    <div style="display:flex; gap:8px;">
+        <a href="{{ url_for('executions.execute', case_id=execution.test_case_id) }}" class="btn btn-primary">Execute Again</a>
+        <a href="{{ url_for('executions.history', case_id=execution.test_case_id) }}" class="btn btn-secondary">Full History</a>
+    </div>
+</div>
+
+<div class="two-col-grid">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Execution Details</h3>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:16px; font-size:0.85rem;">
+            <div style="display:flex; justify-content:space-between;">
+                <span style="color:var(--text-tertiary);">Result</span>
+                <span class="badge badge-{{ execution.result|lower|replace(' ', '-') }}">{{ execution.result }}</span>
+            </div>
+            <div style="display:flex; justify-content:space-between;">
+                <span style="color:var(--text-tertiary);">Environment</span>
+                <span>{{ execution.environment or '-' }}</span>
+            </div>
+            <div style="display:flex; justify-content:space-between;">
+                <span style="color:var(--text-tertiary);">Build Version</span>
+                <span>{{ execution.build_version or '-' }}</span>
+            </div>
+            <div style="display:flex; justify-content:space-between;">
+                <span style="color:var(--text-tertiary);">Executed By</span>
+                <span>{{ execution.executor_name or 'Unknown' }}</span>
+            </div>
+            <div style="display:flex; justify-content:space-between;">
+                <span style="color:var(--text-tertiary);">Date & Time</span>
+                <span>{{ execution.execution_date[:16] if execution.execution_date else '-' }}</span>
+            </div>
+            <div style="display:flex; justify-content:space-between;">
+                <span style="color:var(--text-tertiary);">Duration</span>
+                <span>{{ (execution.duration|string + ' seconds') if execution.duration else '-' }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div>
+        {% if execution.actual_result %}
+        <div class="card mb-2">
+            <h4 style="font-size:0.78rem; text-transform:uppercase; letter-spacing:0.04em; color:var(--text-tertiary); margin-bottom:8px;">Actual Result</h4>
+            <p style="color:var(--text-primary); font-size:0.88rem; white-space:pre-wrap;">{{ execution.actual_result }}</p>
+        </div>
+        {% endif %}
+
+        {% if execution.comments %}
+        <div class="card">
+            <h4 style="font-size:0.78rem; text-transform:uppercase; letter-spacing:0.04em; color:var(--text-tertiary); margin-bottom:8px;">Comments</h4>
+            <p style="color:var(--text-secondary); font-size:0.88rem; white-space:pre-wrap;">{{ execution.comments }}</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>.badge-not-run{background:var(--surface-hover);color:var(--text-tertiary);border:1px solid var(--border-primary);}</style>
+{% endblock %}

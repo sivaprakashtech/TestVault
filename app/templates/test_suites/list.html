@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+{% block title %}Test Suites - {{ project.name }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-left">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+            <a href="{{ url_for('projects.view', project_id=project.id) }}" style="color:var(--text-tertiary); text-decoration:none; font-size:0.82rem;">{{ project.name }}</a>
+            <span style="color:var(--text-tertiary); font-size:0.75rem;">›</span>
+            <span style="font-size:0.82rem; color:var(--text-secondary);">Test Suites</span>
+        </div>
+        <h2>Test Suites</h2>
+        <p>{{ counts.total }} suite{{ 's' if counts.total != 1 else '' }} · {{ counts.Active }} active · {{ counts.Archived }} archived</p>
+    </div>
+    <a href="{{ url_for('test_suites.create', project_id=project.id) }}" class="btn btn-primary">
+        <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/></svg>
+        New Suite
+    </a>
+</div>
+
+<!-- Filter Bar -->
+<div class="filter-bar">
+    <form method="GET" action="{{ url_for('test_suites.by_project', project_id=project.id) }}" style="display:flex; gap:10px; flex-wrap:wrap; width:100%; align-items:center;">
+        <div class="search-wrapper" style="width:260px;">
+            <svg class="search-icon" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/>
+            </svg>
+            <input type="text" class="search-input" name="search" placeholder="Search suites..."
+                   value="{{ filters.search }}" style="height:36px;">
+        </div>
+        <select class="form-select" name="status" style="min-width:120px; height:36px; padding:0 32px 0 12px; font-size:0.82rem;">
+            <option value="">All Status</option>
+            <option value="Active" {{ 'selected' if filters.status == 'Active' }}>Active</option>
+            <option value="Archived" {{ 'selected' if filters.status == 'Archived' }}>Archived</option>
+        </select>
+        <select class="form-select" name="priority" style="min-width:120px; height:36px; padding:0 32px 0 12px; font-size:0.82rem;">
+            <option value="">All Priority</option>
+            <option value="Critical" {{ 'selected' if filters.priority == 'Critical' }}>Critical</option>
+            <option value="High" {{ 'selected' if filters.priority == 'High' }}>High</option>
+            <option value="Medium" {{ 'selected' if filters.priority == 'Medium' }}>Medium</option>
+            <option value="Low" {{ 'selected' if filters.priority == 'Low' }}>Low</option>
+        </select>
+        <select class="form-select" name="sort" style="min-width:130px; height:36px; padding:0 32px 0 12px; font-size:0.82rem;">
+            <option value="created_date" {{ 'selected' if filters.sort == 'created_date' }}>Date Created</option>
+            <option value="name" {{ 'selected' if filters.sort == 'name' }}>Name</option>
+            <option value="priority" {{ 'selected' if filters.sort == 'priority' }}>Priority</option>
+        </select>
+        <button type="submit" class="btn btn-secondary btn-sm">Apply</button>
+        {% if filters.search or filters.status or filters.priority %}
+        <a href="{{ url_for('test_suites.by_project', project_id=project.id) }}" class="btn btn-ghost btn-sm">Clear</a>
+        {% endif %}
+    </form>
+</div>
+
+{% if suites %}
+<div class="table-wrapper">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Priority</th>
+                <th>Test Cases</th>
+                <th>Executions</th>
+                <th>Pass Rate</th>
+                <th>Status</th>
+                <th>Created</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for suite in suites %}
+            <tr class="{{ 'opacity-60' if suite.status == 'Archived' }}">
+                <td>
+                    <a href="{{ url_for('test_suites.view', suite_id=suite.id) }}" style="color:var(--text-primary); text-decoration:none; font-weight:500;">
+                        {{ suite.name }}
+                    </a>
+                    {% if suite.description %}
+                    <div style="font-size:0.75rem; color:var(--text-tertiary); margin-top:2px;">{{ suite.description[:60] }}{{ '...' if suite.description|length > 60 }}</div>
+                    {% endif %}
+                </td>
+                <td><span class="badge badge-{{ suite.priority|lower }}">{{ suite.priority }}</span></td>
+                <td style="font-weight:500;">{{ suite.case_count or 0 }}</td>
+                <td>{{ suite.exec_count or 0 }}</td>
+                <td>
+                    {% set pct = ((suite.passed_count / suite.exec_count * 100) | round(0) | int) if suite.exec_count else 0 %}
+                    <span class="{{ 'text-success' if pct >= 70 else 'text-warning' if pct >= 40 else 'text-danger' if suite.exec_count else '' }}">
+                        {{ pct }}%
+                    </span>
+                </td>
+                <td>
+                    {% if suite.status == 'Active' %}
+                    <span style="display:inline-flex; align-items:center; gap:4px; font-size:0.78rem; color:var(--color-success);">
+                        <span style="width:6px;height:6px;border-radius:50%;background:var(--color-success);"></span> Active
+                    </span>
+                    {% else %}
+                    <span style="display:inline-flex; align-items:center; gap:4px; font-size:0.78rem; color:var(--text-tertiary);">
+                        <span style="width:6px;height:6px;border-radius:50%;background:var(--text-tertiary);"></span> Archived
+                    </span>
+                    {% endif %}
+                </td>
+                <td style="font-size:0.8rem; color:var(--text-tertiary);">{{ suite.created_date[:10] if suite.created_date else '-' }}</td>
+                <td>
+                    <div style="display:flex; gap:4px;">
+                        <a href="{{ url_for('test_suites.edit', suite_id=suite.id) }}" class="btn btn-ghost btn-sm" title="Edit">✎</a>
+                        <form method="POST" action="{{ url_for('test_suites.archive', suite_id=suite.id) }}" style="display:inline;">
+                            <button type="submit" class="btn btn-ghost btn-sm" title="{{ 'Activate' if suite.status == 'Archived' else 'Archive' }}">
+                                {{ '↺' if suite.status == 'Archived' else '⊘' }}
+                            </button>
+                        </form>
+                        <form method="POST" action="{{ url_for('test_suites.delete', suite_id=suite.id) }}" style="display:inline;"
+                              onsubmit="return confirm('Delete suite &quot;{{ suite.name }}&quot; and all its test cases? This cannot be undone.')">
+                            <button type="submit" class="btn btn-ghost btn-sm" style="color:var(--color-danger);" title="Delete">✕</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Pagination -->
+{% if pagination.total_pages > 1 %}
+<div class="pagination">
+    {% if pagination.page > 1 %}
+    <a href="{{ url_for('test_suites.by_project', project_id=project.id, page=pagination.page-1, search=filters.search, status=filters.status, priority=filters.priority, sort=filters.sort, order=filters.order) }}" class="pagination-btn">← Prev</a>
+    {% endif %}
+    {% for p in range(1, pagination.total_pages + 1) %}
+        {% if p == pagination.page %}
+        <span class="pagination-btn active">{{ p }}</span>
+        {% elif p <= 2 or p > pagination.total_pages - 2 or (p >= pagination.page - 1 and p <= pagination.page + 1) %}
+        <a href="{{ url_for('test_suites.by_project', project_id=project.id, page=p, search=filters.search, status=filters.status, priority=filters.priority, sort=filters.sort, order=filters.order) }}" class="pagination-btn">{{ p }}</a>
+        {% elif p == 3 or p == pagination.total_pages - 2 %}
+        <span class="pagination-btn" style="border:none; cursor:default;">...</span>
+        {% endif %}
+    {% endfor %}
+    {% if pagination.page < pagination.total_pages %}
+    <a href="{{ url_for('test_suites.by_project', project_id=project.id, page=pagination.page+1, search=filters.search, status=filters.status, priority=filters.priority, sort=filters.sort, order=filters.order) }}" class="pagination-btn">Next →</a>
+    {% endif %}
+</div>
+{% endif %}
+
+{% else %}
+<div class="empty-state">
+    <h3 class="empty-state-title">
+        {% if filters.search or filters.status or filters.priority %}No suites match your filters{% else %}No test suites yet{% endif %}
+    </h3>
+    <p class="empty-state-desc">
+        {% if filters.search or filters.status or filters.priority %}Try adjusting your filters.{% else %}Create your first test suite to start adding test cases.{% endif %}
+    </p>
+    {% if not filters.search and not filters.status and not filters.priority %}
+    <a href="{{ url_for('test_suites.create', project_id=project.id) }}" class="btn btn-primary">Create Suite</a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.opacity-60 { opacity: 0.6; }
+.opacity-60:hover { opacity: 1; }
+.text-success { color: var(--color-success) !important; }
+.text-warning { color: var(--color-warning) !important; }
+.text-danger { color: var(--color-danger) !important; }
+</style>
+{% endblock %}

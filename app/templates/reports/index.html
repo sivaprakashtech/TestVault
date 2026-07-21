@@ -1,0 +1,206 @@
+{% extends 'base.html' %}
+{% block title %}Reports & Analytics{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-left">
+        <h2>Reports & Analytics</h2>
+        <p>Comprehensive QA metrics and insights</p>
+    </div>
+    <div style="display:flex;gap:8px;">
+        <div class="dropdown-export" style="position:relative;">
+            <button class="btn btn-secondary" onclick="document.getElementById('exportMenu').classList.toggle('active')">
+                <svg viewBox="0 0 20 20" fill="currentColor" style="width:16px;height:16px;"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+                Export
+            </button>
+            <div class="export-dropdown" id="exportMenu">
+                <a href="{{ url_for('reports.export', report_type='executions', format_type='csv') }}">Executions CSV</a>
+                <a href="{{ url_for('reports.export', report_type='executions', format_type='excel') }}">Executions Excel</a>
+                <a href="{{ url_for('reports.export', report_type='bugs', format_type='csv') }}">Bugs CSV</a>
+                <a href="{{ url_for('reports.export', report_type='bugs', format_type='excel') }}">Bugs Excel</a>
+                <a href="{{ url_for('reports.export', report_type='projects', format_type='csv') }}">Projects CSV</a>
+                <a href="{{ url_for('reports.export', report_type='projects', format_type='excel') }}">Projects Excel</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SECTION 1: Summary Cards -->
+<div class="stats-grid" style="grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); margin-bottom:24px;">
+    <div class="stat-card" style="--stat-color:var(--accent-primary);padding:16px;">
+        <div class="stat-card-value" style="font-size:1.6rem;">{{ summary.total_projects }}</div>
+        <div class="stat-card-label">Projects</div>
+    </div>
+    <div class="stat-card" style="--stat-color:var(--color-info);padding:16px;">
+        <div class="stat-card-value" style="font-size:1.6rem;">{{ summary.total_suites }}</div>
+        <div class="stat-card-label">Suites</div>
+    </div>
+    <div class="stat-card" style="--stat-color:var(--accent-primary);padding:16px;">
+        <div class="stat-card-value" style="font-size:1.6rem;">{{ summary.total_cases }}</div>
+        <div class="stat-card-label">Test Cases</div>
+    </div>
+    <div class="stat-card" style="--stat-color:var(--color-success);padding:16px;">
+        <div class="stat-card-value" style="font-size:1.6rem;">{{ summary.total_executions }}</div>
+        <div class="stat-card-label">Executions</div>
+    </div>
+    <div class="stat-card" style="--stat-color:var(--color-danger);padding:16px;">
+        <div class="stat-card-value" style="font-size:1.6rem;">{{ summary.total_bugs }}</div>
+        <div class="stat-card-label">Total Bugs</div>
+    </div>
+    <div class="stat-card" style="--stat-color:var(--color-danger);padding:16px;">
+        <div class="stat-card-value" style="font-size:1.6rem;color:var(--color-danger);">{{ summary.open_bugs }}</div>
+        <div class="stat-card-label">Open Bugs</div>
+    </div>
+    <div class="stat-card" style="--stat-color:var(--color-success);padding:16px;">
+        <div class="stat-card-value" style="font-size:1.6rem;color:var(--color-success);">{{ summary.pass_rate }}%</div>
+        <div class="stat-card-label">Pass Rate</div>
+    </div>
+    <div class="stat-card" style="--stat-color:var(--color-warning);padding:16px;">
+        <div class="stat-card-value" style="font-size:1.6rem;color:var(--color-warning);">{{ summary.fail_rate }}%</div>
+        <div class="stat-card-label">Fail Rate</div>
+    </div>
+</div>
+
+<!-- SECTION 2: Charts -->
+<div class="charts-grid" style="margin-bottom:24px;">
+    <div class="card">
+        <div class="card-header"><h3 class="card-title">Execution Results</h3></div>
+        <div class="chart-container"><canvas id="execChart"></canvas></div>
+    </div>
+    <div class="card">
+        <div class="card-header"><h3 class="card-title">Bug Severity</h3></div>
+        <div class="chart-container"><canvas id="bugSevChart"></canvas></div>
+    </div>
+</div>
+<div class="charts-grid" style="margin-bottom:24px;">
+    <div class="card">
+        <div class="card-header"><h3 class="card-title">Bug Status</h3></div>
+        <div class="chart-container"><canvas id="bugStatusChart"></canvas></div>
+    </div>
+    <div class="card">
+        <div class="card-header"><h3 class="card-title">Test Case Priority</h3></div>
+        <div class="chart-container"><canvas id="casePriorityChart"></canvas></div>
+    </div>
+</div>
+
+<!-- SECTION 3: Trends -->
+<div class="card mb-3">
+    <div class="card-header">
+        <h3 class="card-title">Execution Trend</h3>
+        <div style="display:flex;gap:6px;">
+            <button class="btn btn-ghost btn-sm trend-btn active" data-days="7">7D</button>
+            <button class="btn btn-ghost btn-sm trend-btn" data-days="30">30D</button>
+            <button class="btn btn-ghost btn-sm trend-btn" data-days="90">90D</button>
+        </div>
+    </div>
+    <div style="height:260px;"><canvas id="trendChart"></canvas></div>
+</div>
+
+<!-- SECTION 4: Project Reports -->
+{% if project_reports %}
+<div class="card mb-3">
+    <div class="card-header"><h3 class="card-title">Project Health</h3></div>
+    <div class="table-wrapper" style="border:none;">
+        <table class="data-table">
+            <thead><tr><th>Project</th><th>Suites</th><th>Cases</th><th>Execs</th><th>Pass%</th><th>Fail%</th><th>Open Bugs</th><th>Health</th></tr></thead>
+            <tbody>
+                {% for p in project_reports %}
+                <tr>
+                    <td style="font-weight:500;">{{ p.name }} <code style="font-size:0.7rem;color:var(--accent-primary);margin-left:4px;">{{ p.project_key }}</code></td>
+                    <td>{{ p.suites }}</td><td>{{ p.cases }}</td><td>{{ p.executions }}</td>
+                    <td style="color:var(--color-success);font-weight:500;">{{ p.pass_pct }}%</td>
+                    <td style="color:var(--color-danger);">{{ p.fail_pct }}%</td>
+                    <td>{{ p.open_bugs }}</td>
+                    <td>
+                        <div style="display:flex;align-items:center;gap:6px;">
+                            <div style="width:50px;height:6px;background:var(--surface-hover);border-radius:3px;overflow:hidden;">
+                                <div style="width:{{ p.health }}%;height:100%;background:{% if p.health >= 70 %}var(--color-success){% elif p.health >= 40 %}var(--color-warning){% else %}var(--color-danger){% endif %};border-radius:3px;"></div>
+                            </div>
+                            <span style="font-size:0.78rem;font-weight:500;">{{ p.health|int }}%</span>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- SECTION 5: Tester Analytics -->
+{% if tester_analytics %}
+<div class="card mb-3">
+    <div class="card-header"><h3 class="card-title">Tester Performance</h3></div>
+    <div class="table-wrapper" style="border:none;">
+        <table class="data-table">
+            <thead><tr><th>Tester</th><th>Executions</th><th>Passed</th><th>Failed</th><th>Blocked</th><th>Pass Rate</th></tr></thead>
+            <tbody>
+                {% for t in tester_analytics %}
+                <tr>
+                    <td style="font-weight:500;">{{ t.tester }}</td>
+                    <td>{{ t.total }}</td>
+                    <td style="color:var(--color-success);">{{ t.passed }}</td>
+                    <td style="color:var(--color-danger);">{{ t.failed }}</td>
+                    <td>{{ t.blocked }}</td>
+                    <td><span style="font-weight:600;color:{% if t.pass_rate >= 70 %}var(--color-success){% elif t.pass_rate >= 40 %}var(--color-warning){% else %}var(--color-danger){% endif %};">{{ t.pass_rate }}%</span></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- SECTION 6: Bug Reports -->
+<div class="two-col-grid mb-3">
+    <div class="card">
+        <div class="card-header"><h3 class="card-title">Critical & High Bugs</h3></div>
+        {% if critical_bugs %}
+        <ul class="activity-list">
+            {% for b in critical_bugs %}
+            <li class="activity-item">
+                <div class="activity-dot" style="background:{% if b.severity=='Critical' %}var(--color-danger){% else %}var(--color-warning){% endif %};"></div>
+                <div class="activity-content">
+                    <span class="activity-title"><code style="color:var(--color-danger);font-size:0.75rem;">{{ b.bug_id }}</code> {{ b.title[:40] }}</span>
+                    <span class="activity-meta">{{ b.severity }} · {{ b.priority }} · {{ b.status }}</span>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}<p style="color:var(--text-tertiary);font-size:0.84rem;">No critical bugs open.</p>{% endif %}
+    </div>
+    <div class="card">
+        <div class="card-header"><h3 class="card-title">Most Active Modules</h3></div>
+        {% if active_modules %}
+        <div style="display:flex;flex-direction:column;gap:8px;">
+            {% for m in active_modules %}
+            <div style="display:flex;align-items:center;gap:10px;">
+                <span style="font-size:0.84rem;flex:1;">{{ m.module }}</span>
+                <div style="width:100px;height:6px;background:var(--surface-hover);border-radius:3px;overflow:hidden;">
+                    <div style="width:{{ (m.count / active_modules[0].count * 100)|int }}%;height:100%;background:var(--accent-primary);border-radius:3px;"></div>
+                </div>
+                <span style="font-size:0.78rem;color:var(--text-tertiary);min-width:24px;text-align:right;">{{ m.count }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}<p style="color:var(--text-tertiary);font-size:0.84rem;">No module data.</p>{% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+<style>
+.export-dropdown{position:absolute;top:calc(100%+6px);right:0;background:var(--bg-elevated);border:1px solid var(--border-primary);border-radius:10px;box-shadow:var(--shadow-lg);padding:6px;min-width:180px;opacity:0;visibility:hidden;transform:translateY(-4px);transition:all .2s;z-index:100;}
+.export-dropdown.active{opacity:1;visibility:visible;transform:translateY(0);}
+.export-dropdown a{display:block;padding:8px 12px;font-size:0.82rem;color:var(--text-secondary);text-decoration:none;border-radius:6px;transition:background .15s;}
+.export-dropdown a:hover{background:var(--surface-hover);color:var(--text-primary);}
+.trend-btn.active{background:var(--accent-primary-subtle);color:var(--accent-primary);}
+.mb-3{margin-bottom:24px;}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="{{ url_for('static', filename='js/reports.js') }}"></script>
+{% endblock %}

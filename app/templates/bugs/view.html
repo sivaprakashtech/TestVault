@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+{% block title %}{{ bug.bug_id }} - {{ bug.title }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-left">
+        <div style="display:flex;align-items:center;gap:8px;">
+            <h2>{{ bug.title }}</h2>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:6px;">
+            <code style="font-size:0.78rem;color:var(--color-danger);background:var(--color-danger-subtle);padding:2px 8px;border-radius:4px;">{{ bug.bug_id }}</code>
+            <span class="badge badge-{{ bug.severity|lower }}">{{ bug.severity }}</span>
+            <span style="font-size:0.75rem;font-weight:600;color:{% if bug.priority=='P1' %}var(--color-danger){% elif bug.priority=='P2' %}var(--color-warning){% else %}var(--text-secondary){% endif %};background:var(--surface-hover);padding:2px 8px;border-radius:4px;">{{ bug.priority }}</span>
+            {% if bug.status=='Open' %}<span style="font-size:0.75rem;color:var(--color-danger);background:var(--color-danger-subtle);padding:2px 8px;border-radius:4px;">{{ bug.status }}</span>
+            {% elif bug.status=='Closed' %}<span style="font-size:0.75rem;color:var(--color-success);background:var(--color-success-subtle);padding:2px 8px;border-radius:4px;">{{ bug.status }}</span>
+            {% else %}<span style="font-size:0.75rem;color:var(--text-secondary);background:var(--surface-hover);padding:2px 8px;border-radius:4px;">{{ bug.status }}</span>{% endif %}
+        </div>
+    </div>
+    <div style="display:flex;gap:8px;">
+        <a href="{{ url_for('bug_links.edit', bug_db_id=bug.id) }}" class="btn btn-secondary">Edit</a>
+        <form method="POST" action="{{ url_for('bug_links.delete', bug_db_id=bug.id) }}" style="display:inline;" onsubmit="return confirm('Delete this bug permanently?')">
+            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+        </form>
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 280px;gap:20px;">
+    <div>
+        {% if bug.description %}
+        <div class="card mb-2">
+            <h4 style="font-size:0.78rem;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-tertiary);margin-bottom:8px;">Description</h4>
+            <p style="color:var(--text-primary);font-size:0.88rem;white-space:pre-wrap;">{{ bug.description }}</p>
+        </div>
+        {% endif %}
+
+        {% if bug.steps_to_reproduce %}
+        <div class="card mb-2">
+            <h4 style="font-size:0.78rem;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-tertiary);margin-bottom:8px;">Steps to Reproduce</h4>
+            <p style="color:var(--text-primary);font-size:0.88rem;white-space:pre-wrap;line-height:1.8;">{{ bug.steps_to_reproduce }}</p>
+        </div>
+        {% endif %}
+
+        {% if bug.expected_result or bug.actual_result %}
+        <div class="two-col-grid mb-2">
+            {% if bug.expected_result %}
+            <div class="card">
+                <h4 style="font-size:0.78rem;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-tertiary);margin-bottom:8px;">Expected</h4>
+                <p style="font-size:0.85rem;white-space:pre-wrap;">{{ bug.expected_result }}</p>
+            </div>
+            {% endif %}
+            {% if bug.actual_result %}
+            <div class="card">
+                <h4 style="font-size:0.78rem;text-transform:uppercase;letter-spacing:0.04em;color:var(--color-danger);margin-bottom:8px;">Actual</h4>
+                <p style="font-size:0.85rem;white-space:pre-wrap;">{{ bug.actual_result }}</p>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- Linked Test Cases -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Linked Test Cases</h3>
+            </div>
+            {% if links %}
+            <div style="display:flex;flex-direction:column;gap:8px;">
+                {% for link in links %}
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--surface-glass);border-radius:8px;border:1px solid var(--border-secondary);">
+                    <div>
+                        <a href="{{ url_for('test_cases.view', case_id=link.case_id) }}" style="color:var(--accent-primary);text-decoration:none;font-size:0.84rem;font-weight:500;">{{ link.test_id }}</a>
+                        <span style="margin-left:8px;font-size:0.82rem;color:var(--text-secondary);">{{ link.case_title[:40] }}</span>
+                        <span style="margin-left:8px;font-size:0.72rem;color:var(--text-tertiary);">{{ link.project_name }} › {{ link.suite_name }}</span>
+                        {% if link.exec_result %}
+                        <span class="badge badge-{{ link.exec_result|lower|replace(' ','-') }}" style="margin-left:6px;">{{ link.exec_result }}</span>
+                        {% endif %}
+                    </div>
+                    <form method="POST" action="{{ url_for('bug_links.unlink', link_id=link.link_id) }}" style="display:inline;">
+                        <button type="submit" class="btn btn-ghost btn-sm" style="color:var(--color-danger);" title="Unlink">✕</button>
+                    </form>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p style="color:var(--text-tertiary);font-size:0.84rem;">No test cases linked yet.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="card" style="height:fit-content;">
+        <div style="display:flex;flex-direction:column;gap:14px;font-size:0.84rem;">
+            <div><span style="color:var(--text-tertiary);display:block;margin-bottom:4px;">Severity</span><span class="badge badge-{{ bug.severity|lower }}">{{ bug.severity }}</span></div>
+            <div><span style="color:var(--text-tertiary);display:block;margin-bottom:4px;">Priority</span><span>{{ bug.priority }}</span></div>
+            <div><span style="color:var(--text-tertiary);display:block;margin-bottom:4px;">Status</span><span>{{ bug.status }}</span></div>
+            <div><span style="color:var(--text-tertiary);display:block;margin-bottom:4px;">Module</span><span>{{ bug.module or '—' }}</span></div>
+            <div><span style="color:var(--text-tertiary);display:block;margin-bottom:4px;">Environment</span><span>{{ bug.environment or '—' }}</span></div>
+            <div><span style="color:var(--text-tertiary);display:block;margin-bottom:4px;">Build</span><span>{{ bug.build_version or '—' }}</span></div>
+            <div><span style="color:var(--text-tertiary);display:block;margin-bottom:4px;">Assigned To</span><span>{{ bug.assignee_name or 'Unassigned' }}</span></div>
+            <div><span style="color:var(--text-tertiary);display:block;margin-bottom:4px;">Reported By</span><span>{{ bug.reporter_name or 'Unknown' }}</span></div>
+            <div><span style="color:var(--text-tertiary);display:block;margin-bottom:4px;">Created</span><span>{{ bug.created_date[:10] if bug.created_date else '-' }}</span></div>
+            <div><span style="color:var(--text-tertiary);display:block;margin-bottom:4px;">Updated</span><span>{{ bug.updated_date[:10] if bug.updated_date else '-' }}</span></div>
+        </div>
+    </div>
+</div>
+{% endblock %}

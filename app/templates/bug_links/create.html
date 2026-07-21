@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% block title %}Link Bug{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-left">
+        <h2>Link Bug</h2>
+        <p>{{ test_case.test_id }} · {{ test_case.title }}</p>
+    </div>
+</div>
+
+<div class="card" style="max-width:600px;">
+    <form method="POST" action="{{ url_for('bug_links.link', case_id=test_case.id) }}">
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label required" for="bug_id">Bug ID</label>
+                <input type="text" class="form-input" id="bug_id" name="bug_id"
+                       placeholder="e.g., BUG-1042" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label required" for="bug_priority">Priority</label>
+                <select class="form-select" id="bug_priority" name="bug_priority" required>
+                    <option value="">Select...</option>
+                    <option value="Critical">Critical</option>
+                    <option value="High">High</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Low">Low</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label required" for="bug_title">Bug Title</label>
+            <input type="text" class="form-input" id="bug_title" name="bug_title"
+                   placeholder="Short description of the bug" required>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label required" for="bug_status">Status</label>
+            <select class="form-select" id="bug_status" name="bug_status" required>
+                <option value="">Select status...</option>
+                <option value="Open">Open</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Fixed">Fixed</option>
+                <option value="Closed">Closed</option>
+                <option value="Reopened">Reopened</option>
+            </select>
+        </div>
+
+        <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:24px;">
+            <a href="{{ url_for('test_cases.view', case_id=test_case.id) }}" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary">Link Bug</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

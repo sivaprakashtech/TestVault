@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% block title %}Create Project{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-left">
+        <h2>Create Project</h2>
+        <p>Add a new testing project to organize your test suites and cases</p>
+    </div>
+</div>
+
+<div class="card" style="max-width:640px;">
+    <form method="POST" action="{{ url_for('projects.create') }}" id="projectForm">
+        <div class="form-group">
+            <label class="form-label required" for="name">Project Name</label>
+            <input type="text" class="form-input" id="name" name="name"
+                   placeholder="e.g., E-Commerce Platform" value="{{ data.get('name', '') }}" required
+                   oninput="generateKey(this.value)">
+        </div>
+
+        <div class="form-group">
+            <label class="form-label required" for="project_key">Project Key</label>
+            <input type="text" class="form-input" id="project_key" name="project_key"
+                   placeholder="e.g., ECOM" value="{{ data.get('project_key', '') }}"
+                   style="text-transform:uppercase; font-family:monospace; letter-spacing:0.05em;"
+                   maxlength="10" required>
+            <span style="font-size:0.75rem; color:var(--text-tertiary); margin-top:4px; display:block;">
+                2-10 uppercase letters/numbers. Used as prefix for test case IDs. Must be unique.
+            </span>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label" for="description">Description</label>
+            <textarea class="form-textarea" id="description" name="description"
+                      placeholder="Brief description of the project scope and objectives...">{{ data.get('description', '') }}</textarea>
+        </div>
+
+        <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:24px;">
+            <a href="{{ url_for('projects.index') }}" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary">
+                <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/></svg>
+                Create Project
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function generateKey(name) {
+    const keyField = document.getElementById('project_key');
+    // Only auto-generate if user hasn't manually typed a key
+    if (keyField.dataset.manual === 'true') return;
+
+    // Generate key from first letters of words, max 6 chars
+    const words = name.trim().split(/\s+/).filter(w => w.length > 0);
+    let key = '';
+    if (words.length === 1) {
+        key = words[0].substring(0, 4).toUpperCase();
+    } else {
+        key = words.map(w => w[0]).join('').substring(0, 6).toUpperCase();
+    }
+    key = key.replace(/[^A-Z0-9]/g, '');
+    if (key.length < 2) key = name.replace(/[^A-Za-z0-9]/g, '').substring(0, 4).toUpperCase();
+    keyField.value = key;
+}
+
+document.getElementById('project_key').addEventListener('input', function() {
+    this.dataset.manual = 'true';
+    this.value = this.value.toUpperCase().replace(/[^A-Z0-9_]/g, '');
+});
+</script>
+{% endblock %}

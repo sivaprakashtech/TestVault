@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}Link Bug to {{ test_case.test_id }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-left">
+        <h2>Link Bug</h2>
+        <p>Link an existing bug to {{ test_case.test_id }} · {{ test_case.title }}</p>
+    </div>
+</div>
+
+<div class="card" style="max-width:640px;">
+    <form method="POST" action="{{ url_for('bug_links.link', case_id=test_case.id) }}">
+        <div class="form-group">
+            <label class="form-label required" for="bug_db_id">Select Bug</label>
+            <select class="form-select" id="bug_db_id" name="bug_db_id" required>
+                <option value="">Choose a bug...</option>
+                {% for bug in bugs %}
+                <option value="{{ bug.id }}">{{ bug.bug_id }} — {{ bug.title }} ({{ bug.status }})</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label" for="execution_id">Link to Execution (optional)</label>
+            <input type="number" class="form-input" id="execution_id" name="execution_id" placeholder="Execution ID (optional)">
+        </div>
+
+        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:24px;">
+            <a href="{{ url_for('test_cases.view', case_id=test_case.id) }}" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary">Link Bug</button>
+        </div>
+    </form>
+
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border-secondary);">
+        <p style="font-size:0.84rem;color:var(--text-secondary);">
+            Don't see the bug? <a href="{{ url_for('bug_links.create', case_id=test_case.id) }}" style="color:var(--accent-primary);">Report a new bug</a> and it will be linked automatically.
+        </p>
+    </div>
+</div>
+{% endblock %}

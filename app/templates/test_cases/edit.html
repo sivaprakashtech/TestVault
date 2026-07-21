@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% block title %}Edit {{ test_case.test_id }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-left">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+            <a href="{{ url_for('test_cases.view', case_id=test_case.id) }}" style="color:var(--text-tertiary); text-decoration:none; font-size:0.82rem;">{{ test_case.test_id }}</a>
+            <span style="color:var(--text-tertiary); font-size:0.75rem;">›</span>
+            <span style="font-size:0.82rem; color:var(--text-secondary);">Edit</span>
+        </div>
+        <h2>Edit Test Case</h2>
+        <p>{{ test_case.test_id }} · {{ test_case.title }}</p>
+    </div>
+</div>
+
+<div class="card" style="max-width:800px;">
+    <form method="POST" action="{{ url_for('test_cases.edit', case_id=test_case.id) }}">
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label required" for="type">Type</label>
+                <select class="form-select" id="type" name="type">
+                    {% for t in ['Functional','Regression','Smoke','Sanity','API','UI'] %}
+                    <option value="{{ t }}" {{ 'selected' if test_case.type == t }}>{{ t }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="status">Status</label>
+                <select class="form-select" id="status" name="status">
+                    {% for s in ['Draft','Ready','Active','Deprecated'] %}
+                    <option value="{{ s }}" {{ 'selected' if test_case.status == s }}>{{ s }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label required" for="title">Title</label>
+            <input type="text" class="form-input" id="title" name="title" value="{{ test_case.title }}" required>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label" for="description">Description</label>
+            <textarea class="form-textarea" id="description" name="description">{{ test_case.description or '' }}</textarea>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label" for="preconditions">Preconditions</label>
+            <textarea class="form-textarea" id="preconditions" name="preconditions" style="min-height:60px;">{{ test_case.preconditions or '' }}</textarea>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label required" for="steps">Test Steps</label>
+            <textarea class="form-textarea" id="steps" name="steps" style="min-height:120px;" required>{{ test_case.steps }}</textarea>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label required" for="expected_result">Expected Result</label>
+            <textarea class="form-textarea" id="expected_result" name="expected_result" style="min-height:80px;" required>{{ test_case.expected_result }}</textarea>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label required" for="priority">Priority</label>
+                <select class="form-select" id="priority" name="priority">
+                    {% for p in ['Critical','High','Medium','Low'] %}
+                    <option value="{{ p }}" {{ 'selected' if test_case.priority == p }}>{{ p }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="severity">Severity</label>
+                <select class="form-select" id="severity" name="severity">
+                    {% for s in ['Blocker','Critical','Major','Minor','Trivial'] %}
+                    <option value="{{ s }}" {{ 'selected' if test_case.severity == s }}>{{ s }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label" for="module">Module</label>
+                <input type="text" class="form-input" id="module" name="module" value="{{ test_case.module or '' }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="feature">Feature</label>
+                <input type="text" class="form-input" id="feature" name="feature" value="{{ test_case.feature or '' }}">
+            </div>
+        </div>
+
+        <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:24px;">
+            <a href="{{ url_for('test_cases.view', case_id=test_case.id) }}" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+        </div>
+    </form>
+</div>
+{% endblock %}
